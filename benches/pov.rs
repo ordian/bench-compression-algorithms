@@ -40,7 +40,10 @@ fn bench_cmp_compression(c: &mut Criterion) {
     let lz4_4_encoded = lz4_encode(&scale_encoded, 4);
     let zstd_3_encoded = zstd_encode(&scale_encoded, 3);
     let zstd_10_encoded = zstd_encode(&scale_encoded, 10);
+    let ruzstd_3_decoded = ruzstd_decode(&zstd_3_encoded);
+    assert_eq!(&ruzstd_3_decoded, &scale_encoded);
 
+    eprintln!("");
     eprintln!("Compression ratios:");
     eprintln!("  gzip(4): {}", scale_encoded.len() as f32 / gzip_4_encoded.len() as f32);
     eprintln!("  gzip(6): {}", scale_encoded.len() as f32 / gzip_6_encoded.len() as f32);
@@ -58,6 +61,7 @@ fn bench_cmp_compression(c: &mut Criterion) {
     group_decode.bench_function("lz4(4)", |b| b.iter(|| lz4_decode(&lz4_4_encoded)));
     group_decode.bench_function("zstd(3)", |b| b.iter(|| zstd_decode(&zstd_3_encoded)));
     group_decode.bench_function("zstd(10)", |b| b.iter(|| zstd_decode(&zstd_10_encoded)));
+    group_decode.bench_function("ruzstd(3)", |b| b.iter(|| ruzstd_decode(&zstd_3_encoded)));
     group_decode.finish();
 }
 
@@ -106,6 +110,15 @@ fn zstd_decode(data: &[u8]) -> Vec<u8> {
     use zstd::stream::read::Decoder;
 
     let mut decoder = Decoder::new(data).unwrap();
+    let mut buffer = Vec::with_capacity(1024);
+    decoder.read_to_end(&mut buffer).unwrap();
+    buffer
+}
+
+fn ruzstd_decode(mut data: &[u8]) -> Vec<u8> {
+    use ruzstd::streaming_decoder::StreamingDecoder;
+
+    let mut decoder = StreamingDecoder::new(&mut data).unwrap();
     let mut buffer = Vec::with_capacity(1024);
     decoder.read_to_end(&mut buffer).unwrap();
     buffer

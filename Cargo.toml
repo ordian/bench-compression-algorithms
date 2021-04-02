@@ -13,6 +13,7 @@ criterion = "0.3.3"
 flate2 = { version = "1.0.19", features = ["zlib"], default-features = false }
 lz4 = "1.23.2"
 zstd = "0.6.0"
+ruzstd = "0.2.2"
 
 [[bench]]
 name = "pov"
